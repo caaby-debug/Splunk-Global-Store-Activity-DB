@@ -1,0 +1,334 @@
+<form version="1.1" theme="dark">
+  <label>Global Store Activity Tracker</label>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="multiselect" token="ctry2">
+      <label>Country</label>
+      <choice value="*">All</choice>
+      <choice value="BG">Bulgaria</choice>
+      <choice value="CA">Canada</choice>
+      <choice value="HR">Croatia</choice>
+      <choice value="IN">India</choice>
+      <choice value="ID">Indonesia</choice>
+      <choice value="IL">Israel</choice>
+      <choice value="MY">Malaysia</choice>
+      <choice value="MX">Mexico</choice>
+      <choice value="NZ">New Zealand</choice>
+      <choice value="NO">Norway</choice>
+      <choice value="PH">Philippines</choice>
+      <choice value="RO">Romania</choice>
+      <choice value="SA">Saudi Arabia</choice>
+      <choice value="SG">Singapore</choice>
+      <choice value="SK">Slovakia</choice>
+      <choice value="ZA">South Africa</choice>
+      <choice value="CH">Switzerland</choice>
+      <choice value="TW">Taiwan</choice>
+      <choice value="TH">Thailand</choice>
+      <choice value="TR">Turkey</choice>
+      <choice value="VN">Vietnam</choice>
+      <valuePrefix>country="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <default>*</default>
+    </input>
+    <input type="text" token="style">
+      <label>Style Number</label>
+      <default>*</default>
+      <prefix>styleNumber="</prefix>
+      <suffix>"</suffix>
+    </input>
+    <input type="text" token="color">
+      <label>Color Number</label>
+      <prefix>colorNumber="</prefix>
+      <suffix>"</suffix>
+      <default>*</default>
+    </input>
+    <input type="time" token="time_field">
+      <label></label>
+      <default>
+        <earliest>-8h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <chart>
+        <title>PREORDER SUCCESS</title>
+        <search>
+          <query>index=app-silver (app=partnercartpreorderwkr source="/var/log/nike/partnercartpreorderwkr/partnercartpreorderwkr.log" sourcetype="log4j:partnercartpreorderwkr"  event=executeRequest service=eswpreorder ) OR (app=pcartpreorderwkr source=/var/log/nike/pcartpreorderwkr/pcartpreorderwkr.log sourcetype=log4j:pcartpreorderwkr "Success Response for orderId" )
+ | rex field=_raw "\"CustomerCountry\":\"(?&lt;CustomerCountry&gt;[^\"]+)\"" | rex field=_raw "\"StyleNumber\":\"(?&lt;styleNumber&gt;[^\"]+)\"" | rex field=_raw "\"ColorNumber\":\"(?&lt;colorNumber&gt;[^\"]+)\""  | rename  CustomerCountry as country | search $ctry2$ $style$ $color$ |
+          timechart span=1m count by country limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>GSOC - REQEUST RECEIVED</title>
+        <search>
+          <query>index=docker* applicationName="*partnerorderreceiver*" source="/mp/order-edge/partnerorderreceiver-prod/main.log" eventName=acceptOCAdapterRequest "Order received from esw" $ctry2$ $style$ $color$ | timechart span=1m count by geoCountry limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>PREORDER SUCCESS - APP - iOS</title>
+        <search>
+          <query>index=app-silver "com.nike.commerce.omega.ios" (app=partnercartpreorderwkr source="/var/log/nike/partnercartpreorderwkr/partnercartpreorderwkr.log" sourcetype="log4j:partnercartpreorderwkr"  event=executeRequest service=eswpreorder) OR (app=pcartpreorderwkr source=/var/log/nike/pcartpreorderwkr/pcartpreorderwkr.log sourcetype=log4j:pcartpreorderwkr "Success Response for orderId" )  | rex field=_raw "\"CustomerCountry\":\"(?&lt;CustomerCountry&gt;[^\"]+)\"" | rex field=_raw "\"StyleNumber\":\"(?&lt;styleNumber&gt;[^\"]+)\"" | rex field=_raw "\"ColorNumber\":\"(?&lt;colorNumber&gt;[^\"]+)\""  | rename  CustomerCountry as country | search $ctry2$ $style$ $color$ |
+          timechart span=1m count by country limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>PREORDER SUCCESS - APP - ANDROID</title>
+        <search>
+          <query>index=app-silver "com.nike.commerce.omega.droid" (app=partnercartpreorderwkr source="/var/log/nike/partnercartpreorderwkr/partnercartpreorderwkr.log" sourcetype="log4j:partnercartpreorderwkr"  event=executeRequest service=eswpreorder) OR (app=pcartpreorderwkr source=/var/log/nike/pcartpreorderwkr/pcartpreorderwkr.log sourcetype=log4j:pcartpreorderwkr "Success Response for orderId" ) | rex field=_raw "\"CustomerCountry\":\"(?&lt;CustomerCountry&gt;[^\"]+)\"" | rex field=_raw "\"StyleNumber\":\"(?&lt;styleNumber&gt;[^\"]+)\"" | rex field=_raw "\"ColorNumber\":\"(?&lt;colorNumber&gt;[^\"]+)\""  | rename  CustomerCountry as country | search $ctry2$ $style$ $color$ |
+          timechart span=1m count by country limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>GSOC - APP ORDERS - iOS</title>
+        <search>
+          <query>index=docker* applicationName="*partnerorderreceiver*" source="/mp/order-edge/partnerorderreceiver-prod/main.log" eventName=acceptOCAdapterRequest "Order received from esw" appID= "com.nike.commerce.omega.ios" eventName=acceptOCAdapterRequest : Order received from esw country="*" styleNumber="*" colorNumber="*" $ctry2$  $style$ $color$ | timechart span=1m count by geoCountry limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>GSOC - APP ORDERS - ANDROID</title>
+        <search>
+          <query>index=docker* applicationName="*partnerorderreceiver*" source="/mp/order-edge/partnerorderreceiver-prod/main.log" eventName=acceptOCAdapterRequest "Order received from esw" appID= "com.nike.commerce.omega.droid" eventName=acceptOCAdapterRequest : Order received from esw country="*" styleNumber="*" colorNumber="*" $ctry2$ $style$ $color$ | timechart span=1m count by geoCountry limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>PREORDER SUCCESS - NikeID - APP  (iOS + Android)</title>
+        <search>
+          <query>index=app-silver environment=* (application=pcartpreorderwkr source=/var/log/nike/pcartpreorderwkr/pcartpreorderwkr.log sourcetype=log4j:pcartpreorderwkr source="/var/log/nike/pcartpreorderwkr/pcartpreorderwkr.log" sourcetype="log4j:pcartpreorderwkr" "Success Response for orderId" host=*ip*) OR (app=partnercartpreorderwkr source="/var/log/nike/partnercartpreorderwkr/partnercartpreorderwkr.log" sourcetype="log4j:partnercartpreorderwkr"  event=executeRequest service=eswpreorder)
+| rex "(?i)\"Type\":\"(?P&lt;type&gt;[^\"]+)" 
+| rex field=_raw "\"CustomerCountry\":\"(?&lt;CustomerCountry&gt;[^\"]+)\"" | rex field=_raw "\"StyleNumber\":\"(?&lt;styleNumber&gt;[^\"]+)\"" | rex field=_raw "\"ColorNumber\":\"(?&lt;colorNumber&gt;[^\"]+)\""| rename  CustomerCountry as country
+| where type="NIKEID" | search $ctry2$  |
+          timechart span=1m count by country limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>GSOC - APP ORDERS - NikeID (iOS + Android)</title>
+        <search>
+          <query>index=docker* applicationName="*partnerorderreceiver*" source="/mp/order-edge/partnerorderreceiver-prod/main.log" eventName=acceptOCAdapterRequest "Order received from esw" type=NIKEID country="*" styleNumber="*" colorNumber="*"   $ctry2$ | timechart span=1m count by country limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>GSOC - ORDERS BY PAYMENT TYPE</title>
+        <search>
+          <query>index=docker* applicationName="*partnerorderreceiver*" source="/mp/order-edge/partnerorderreceiver-prod/main.log" eventName=acceptOCAdapterRequest "Order received from esw" Order received from esw country="*" styleNumber="*" colorNumber="*" $ctry2$ $style$ $color$ | timechart span=1m count by paymentType limit=50</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Parter Cart V2 - Member VS Visitor</title>
+        <search>
+          <query>index=app-silver app=partnercartpreorderwkr source="/var/log/nike/partnercartpreorderwkr/partnercartpreorderwkr.log" sourcetype="log4j:partnercartpreorderwkr" event="serializeGS06"
+| rex field=_raw "\"CustomerCountry\":\"(?&lt;CustomerCountry&gt;[^\"]+)\""
+| rex field=_raw "\"RegisterWithNike\":(?&lt;RegisterWithNike&gt;true|false)"
+| table _time CustomerCountry RegisterWithNike
+| rename CustomerCountry AS country
+| search $ctry2$
+| timechart span=1m count by RegisterWithNike
+| rename true AS Member false AS Guest</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>GSOC - Member vs Guest</title>
+        <search>
+          <query>index=docker* applicationName="*partnerorderreceiver*" source="/mp/order-edge/partnerorderreceiver-prod/main.log" eventName=acceptOCAdapterRequest "Order received from esw"
+| eval profileID=trim(profileID, "\" ")
+| eval profileStatus=if(profileID="null" OR profileID="", "Guest", "Member")
+| where $ctry2$
+| eval countryStatus=country . "-" . profileStatus
+| timechart span=1m count BY countryStatus</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Order Modification / Cancelations -- ALL Countries, All Products</title>
+        <search>
+          <query>index=dockerlogs sourcetype=*partnerorderstatusupdates* "Cancel event received from DOMS, request payload:" | timechart count span=1m</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.axisY2.enabled">1</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.overlayFields">completionRate</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>PARTNER CART ERRORS - All Countries, All Products</title>
+        <search>
+          <query>index=app-silver app=partnercartpreorderwkr source=/var/log/nike/partnercartpreorderwkr/partnercartpreorderwkr.log "event=jobCompletedWithError" (*RESERVATION_FAILURE* OR *OUT_OF_STOCK* OR *SKU_INVALID* OR *PRODUCT_NOT_BUYABLE* OR *PARTNER_INVALID* OR *SYSTEM_ERROR* OR *PARTNER_UNAVAILABLE* OR *REQUEST_INVALID* OR *LIMIT_EXCEEDED* OR *PARTIAL_RESERVATION_FAILURE*)
+| rex field=_raw max_match=0 "\"code\":\"(?&lt;code&gt;[^\"]*)\""
+| stats count(eval(like(code, "PARTIAL_RESERVATION_FAILURE"))) AS "PARTIAL_RESERVATION_FAILURE", count(eval(like(code, "RESERVATION_FAILURE"))) AS "RESERVATION_FAILURE" , count(eval(like(code, "OUT_OF_STOCK"))) AS "OUT_OF_STOCK" , count(eval(like(code, "SKU_INVALID"))) AS "SKU_INVALID" , count(eval(like(code, "PRODUCT_NOT_BUYABLE"))) AS "PRODUCT_NOT_BUYABLE" , count(eval(like(code, "PARTNER_INVALID"))) AS "PARTNER_INVALID" , count(eval(like(code, "SYSTEM_ERROR"))) AS "SYSTEM_ERROR" , count(eval(like(code, "PARTNER_UNAVAILABLE"))) AS "PARTNER_UNAVAILABLE" , count(eval(like(code, "REQUEST_INVALID"))) AS "REQUEST_INVALID" , count(eval(like(code, "LIMIT_EXCEEDED"))) AS "LIMIT_EXCEEDED"
+| transpose 0 column_name=code
+| rename "row 1" as count
+| sort - count</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Order Returns -- All Countries, All Products</title>
+        <search>
+          <query>index=dockerlogs app=intg-pltfm-msg-receiver* source="/mp/doms-intg/intg-pltfm-msg-receiver-*prod/intg-pltfm-msg-receiver*.log" messageType=GS_RETURN_ORDER_CREATE
+| rex field=_raw "\"CustomerCountry\":\"(?&lt;CustomerCountry&gt;[^\"]+)\""
+| rename CustomerCountry AS country
+| timechart span=1m count BY country limit=100</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Order Awk - All Countries, All Products</title>
+        <search>
+          <query>index=app* sourcetype="log4j:sterling-consumer-om" source="*ESWTransmissionAgentServer*" "Executing the service" ASNRequest_RDT | timechart count span=1m</query>
+          <earliest>$time_field.earliest$</earliest>
+          <latest>$time_field.latest$</latest>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+</form>
